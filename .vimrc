@@ -62,7 +62,11 @@ set tabstop=4                     " Global tab width - Affects tabs already in a
 
 " Color
 set background=dark
-color solarized
+try
+    color solarized
+catch /^Vim\%((\a\+)\)\=:E185/
+    " Silently catch error - This is purely for installation
+endtry
 
 " Searching
 set ignorecase                    " do all searches in lowercase...
