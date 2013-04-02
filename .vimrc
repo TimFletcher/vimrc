@@ -11,12 +11,13 @@ call vundle#rc()
 Bundle 'gmarik/vundle'
 
 Bundle 'altercation/vim-colors-solarized.git'
+Bundle 'godlygeek/tabular.git'
+Bundle 'jmcantrell/vim-virtualenv.git'
 Bundle 'kchmck/vim-coffee-script.git'
 Bundle 'kien/ctrlp.vim.git'
 Bundle 'myusuf3/numbers.vim.git'
 Bundle 'tpope/vim-haml.git'
 Bundle 'tpope/vim-rails.git'
-Bundle 'jmcantrell/vim-virtualenv.git'
 
 " ---------------------
 " --- Basic Options ---
@@ -46,8 +47,6 @@ set wildmode=list:longest         " Complete files like a shell
 
 " hide pyc files in netrw
 let g:netrw_list_hide= '.*\.pyc$'
-
-
 
 set shell=bash\ -l                " Source ~/.profile for :sh
 set noesckeys                     " Get rid of the delay when hitting esc!
@@ -124,13 +123,20 @@ augroup END
 
 " doesn't seem to work properly. Maybe delete this as we can just use esc when
 " multi-line editing.
-imap <c-c> <esc> " Also map caps lock to ctrl.
+"imap <c-c> <esc> " Also map caps lock to ctrl.
+imap jj <esc>
+
 
 " Clear the search buffer on hitting return
 function! MapCR()
   nnoremap <leader><leader> :nohlsearch <cr>
 endfunction
 call MapCR()
+
+function! CloseQuickFix()
+  nnoremap cl :ccl <cr>
+endfunction
+call CloseQuickFix()
 
 " Move around splits with <c-hjkl>
 nnoremap <c-j> <c-w>j
@@ -179,7 +185,8 @@ highlight PmenuSel ctermfg=black
 
 let g:ctrlp_working_path_mode = 0
 let g:ctrlp_max_height = 20
-let g:ctrlp_custom_ignore = '\.bin$\|vendor\/bundle$'
+let g:ctrlp_custom_ignore = '\.bin$\|bin$\|vendor\/bundle$\|vendor\/gems$'
+"let g:ctrlp_custom_ignore = '\.bin$\|vendor\/bundle$'
 nnoremap <c-b> :CtrlPBuffer<CR>
 "nnoremap <leader>. :CtrlPTag<cr>
 
@@ -191,7 +198,7 @@ nnoremap <c-b> :CtrlPBuffer<CR>
 "autocmd FileType ruby set omnifunc=rubycomplete#Complete
 "autocmd FileType ruby let g:rubycomplete_buffer_loading=1
 "autocmd FileType ruby let g:rubycomplete_classes_in_global=1
-"autocmd FileType python set omnifunc=pythoncomplete#Complete
+autocmd FileType python set omnifunc=pythoncomplete#Complete
 "autocmd FileType javascript set omnifunc=javascriptcomplete#CompleteJS
 "autocmd FileType html set omnifunc=htmlcomplete#CompleteTags
 "autocmd FileType css set omnifunc=csscomplete#CompleteCSS
