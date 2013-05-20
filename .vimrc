@@ -1,6 +1,3 @@
-" better mapping of noh
-" Learn vim.rails
-
 set nocompatible               " be iMproved
 filetype off                   " required!
 
@@ -15,9 +12,9 @@ Bundle 'godlygeek/tabular.git'
 Bundle 'jmcantrell/vim-virtualenv.git'
 Bundle 'kchmck/vim-coffee-script.git'
 Bundle 'kien/ctrlp.vim.git'
-Bundle 'myusuf3/numbers.vim.git'
 Bundle 'tpope/vim-haml.git'
-Bundle 'tpope/vim-rails.git'
+"Bundle 'tpope/vim-surround.git'
+"Bundle 'tpope/vim-rails.git'
 
 " ---------------------
 " --- Basic Options ---
@@ -36,6 +33,7 @@ set ruler                         " Show cursor position
 set scrolloff=5                   " Show 5 lines of context around the cursor
 set showmode                      " Display the mode you're in
 set hidden                        " Allow switching buffers without saving
+set history=1000                  " Keep long command history
 set wildignore=*.pyc,*.sqlite3,*.db                          " Databases
 set wildignore+=*.jpg,*.jpeg,*.png,*.gif,*.ico               " Images
 set wildignore+=*.eot,*.svg,*.ttf,*.woff                     " Fonts
@@ -63,8 +61,7 @@ set tabstop=4                     " Global tab width - Affects tabs already in a
 set background=dark
 try
     color solarized
-catch /^Vim\%((\a\+)\)\=:E185/
-    " Silently catch error - This is purely for installation
+catch /^Vim\%((\a\+)\)\=:E185/    " Silently catch error so we can run vim before the scheme is installed.
 endtry
 
 " Searching
@@ -121,11 +118,8 @@ augroup END
 " --- Key Mappings ---
 " --------------------
 
-" doesn't seem to work properly. Maybe delete this as we can just use esc when
-" multi-line editing.
-"imap <c-c> <esc> " Also map caps lock to ctrl.
-imap jj <esc>
-
+" Leave insert mode
+imap jk <esc>
 
 " Clear the search buffer on hitting return
 function! MapCR()
@@ -143,6 +137,10 @@ nnoremap <c-j> <c-w>j
 nnoremap <c-k> <c-w>k
 nnoremap <c-h> <c-w>h
 nnoremap <c-l> <c-w>l
+
+" Jump 10 lines up and down
+nnoremap <c-k> 10k
+nnoremap <c-j> 10j
 
 " Because I keep hitting :W
 command! W :w
@@ -363,4 +361,3 @@ function! InlineVariable()
     :let @b = l:tmp_b
 endfunction
 nnoremap <leader>ri :call InlineVariable()<cr>
-
