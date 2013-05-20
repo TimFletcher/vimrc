@@ -43,8 +43,8 @@ set wildignore+=tags,*.log,tmp                               " Misc
 set wildmenu                      " Enhanced command line completion
 set wildmode=list:longest         " Complete files like a shell
 
-" hide pyc files in netrw
-let g:netrw_list_hide= '.*\.pyc$'
+" hide files in netrw
+let g:netrw_list_hide= '.*\.pyc$,.DS_Store'
 
 set shell=bash\ -l                " Source ~/.profile for :sh
 set noesckeys                     " Get rid of the delay when hitting esc!
@@ -184,7 +184,6 @@ highlight PmenuSel ctermfg=black
 let g:ctrlp_working_path_mode = 0
 let g:ctrlp_max_height = 20
 let g:ctrlp_custom_ignore = '\.bin$\|bin$\|vendor\/bundle$\|vendor\/gems$'
-"let g:ctrlp_custom_ignore = '\.bin$\|vendor\/bundle$'
 nnoremap <c-b> :CtrlPBuffer<CR>
 "nnoremap <leader>. :CtrlPTag<cr>
 
