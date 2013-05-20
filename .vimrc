@@ -205,7 +205,7 @@ autocmd FileType python set omnifunc=pythoncomplete#Complete
 " --- Custom indentations ---
 " ---------------------------
 
-autocmd BufRead,BufNewFile *.js,*.js.coffee,*.coffee,*.js.erb,*.html,*.rb set tabstop=2 shiftwidth=2
+autocmd BufRead,BufNewFile *.js,*.js.coffee,*.coffee,*.js.erb,*.html,*.rb,*.css,*.scss set tabstop=2 shiftwidth=2
 autocmd Filetype javascript setlocal ts=2 sw=2 sts=0 expandtab
 autocmd Filetype html setlocal ts=2 sw=2 expandtab
 autocmd Filetype ruby setlocal ts=2 sw=2 expandtab
