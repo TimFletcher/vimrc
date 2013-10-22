@@ -7,14 +7,13 @@ call vundle#rc()
 " let Vundle manage Vundle
 Bundle 'gmarik/vundle'
 
+"Bundle 'SirVer/ultisnips.git'
 Bundle 'altercation/vim-colors-solarized.git'
-Bundle 'godlygeek/tabular.git'
 Bundle 'jmcantrell/vim-virtualenv.git'
 Bundle 'kchmck/vim-coffee-script.git'
 Bundle 'kien/ctrlp.vim.git'
-Bundle 'tpope/vim-haml.git'
+Bundle 'nvie/vim-flake8.git'
 "Bundle 'tpope/vim-surround.git'
-"Bundle 'tpope/vim-rails.git'
 
 " ---------------------
 " --- Basic Options ---
@@ -44,7 +43,7 @@ set wildmenu                      " Enhanced command line completion
 set wildmode=list:longest         " Complete files like a shell
 
 " hide files in netrw
-let g:netrw_list_hide= '.*\.pyc$,.DS_Store'
+let g:netrw_list_hide= '.*\.pyc$,.DS_Store,^tags,\.sass-cache,htmlcov'
 
 set shell=bash\ -l                " Source ~/.profile for :sh
 set noesckeys                     " Get rid of the delay when hitting esc!
@@ -74,7 +73,9 @@ set hlsearch                      " Highlight previous search pattern
 " Soft/Hard Wrapping
 set nowrap                        " Do not wrap on window width
 set linebreak                     " Don't break words to wrap
-set textwidth=0                  " Maximum width of text
+set nolist
+set wrapmargin=0
+set textwidth=0                   " Maximum width of text
 if exists("&colorcolumn")
   set colorcolumn=80              " Set coloured column at 80 characters
 endif
@@ -90,6 +91,9 @@ set statusline=\ %f%m%r%h\ %w\ Line:\ %l/%L:%c " Customise the status line
 " Leader Key
 let mapleader = ","
 
+" Python syntax check on save
+"autocmd BufWritePost *.py call Flake8()
+
 " ---------------------------
 " --- Custom autocommands ---
 " ---------------------------
@@ -97,11 +101,17 @@ let mapleader = ","
 augroup vimrcEx
   " Clear all autocmds in the group
   autocmd!
-  autocmd FileType text setlocal textwidth=78
+  "autocmd FileType text setlocal textwidth=78
 
   "for ruby, autoindent with two spaces, always expand tabs
   autocmd FileType ruby,haml,eruby,yaml,html,javascript,sass,cucumber set ai sw=2 sts=2 et
   autocmd FileType python set sw=4 sts=4 et
+
+
+  " for pylint
+  "autocmd FileType python compiler pylint
+
+
 
   "autocmd! BufRead,BufNewFile *.sass setfiletype sass 
 
@@ -119,7 +129,10 @@ augroup END
 " --------------------
 
 " Leave insert mode
-imap jk <esc>
+"imap jk <esc>
+
+" Disable ctrl + c
+imap <c-c> <Nop>
 
 " Clear the search buffer on hitting return
 function! MapCR()
@@ -147,6 +160,9 @@ command! W :w
 
 " Quick close html tags
 imap <leader>c </<C-X><C-O><esc>F<i
+
+" Quick save
+nmap <leader>w :w<cr>
 
 " ----------------------------
 " --- Multipurpose tab key ---
@@ -182,10 +198,11 @@ highlight PmenuSel ctermfg=black
 " ------------------------------
 
 let g:ctrlp_working_path_mode = 0
-let g:ctrlp_max_height = 20
-let g:ctrlp_custom_ignore = '\.bin$\|bin$\|vendor\/bundle$\|vendor\/gems$'
+let g:ctrlp_custom_ignore = '\.bin$\|bin$\|\.sass-cache$\|\.css$\|htmlcov$\|vendor\/bundle$\|vendor\/gems$\|node_modules$'
+let g:ctrlp_match_window = 'bottom,order:btt,min:1,max:25,results:25'
+
+
 nnoremap <c-b> :CtrlPBuffer<CR>
-"nnoremap <leader>. :CtrlPTag<cr>
 
 " --------------------
 " --- Omnicomplete ---
@@ -208,7 +225,7 @@ autocmd BufRead,BufNewFile *.js,*.js.coffee,*.coffee,*.js.erb,*.html,*.rb,*.css,
 autocmd Filetype javascript setlocal ts=2 sw=2 sts=0 expandtab
 autocmd Filetype html setlocal ts=2 sw=2 expandtab
 autocmd Filetype ruby setlocal ts=2 sw=2 expandtab
-set filetype=html.javascript
+"set filetype=html.javascript
 
 " ------------------------
 " --- Custom FileTypes ---
@@ -220,12 +237,15 @@ autocmd BufRead,BufNewFile {Capfile,Gemfile,Rakefile,Thorfile,config.ru,.caprc,.
 " --- Ctags and Taglist ---
 " --------------------------
 
-set tags=tags;/                                  " Search for tag file
-map <Leader>rt :!ctags --extra=+f -R *<CR><CR>   " Update tags
-let Tlist_WinWidth = 70                          " Window width
-let Tlist_Show_One_File = 1                      " Show tags for current buffer
-let Tlist_Exit_OnlyWindow = 1                    " Allow exit if only taglist
-map T :TlistToggle<CR><c-w><c-w>
+" Search for tag file
+set tags=tags;/
+
+" Ctags should include the virtualenv
+map <F1> :!ctags -R -f ./tags $VIRTUAL_ENV/lib/python2.7/site-packages<CR>
+map <F2> :!ctags -R -f ./tags --exclude=node_modules<CR>
+
+" Show window to choose when there are multiple matches for a tag - http://stackoverflow.com/a/3614824/453405
+nnoremap <C-]> :execute 'tj' expand('<cword>')<CR>zv "
 
 " --------------
 " --- MacVim ---
@@ -268,6 +288,8 @@ function! s:Ack(cmd, args, ...)
 endfunction
 command! -bang -nargs=* -complete=file Ack call s:Ack('grep<bang>',<q-args>)
 
+:map <leader>f :Ack 
+
 " --------------------------------------------
 " --- Rename current file - Gary Berhnardt ---
 " --------------------------------------------
@@ -281,82 +303,13 @@ function! RenameFile()
     redraw!
   endif
 endfunction
-map <leader>n :call RenameFile()<cr>
+map <leader>r :call RenameFile()<cr>
 
-" ------------------------------------------------------
-" --- Test runnner - Ben Orenstein & Gary Bernhardt ---
-" ------------------------------------------------------
+" -------------------------
+" --- Run python tests ---
+" ------------------------
 
-map <Leader>t :call RunCurrentTest()<CR>
-map <Leader>o :call RunCurrentLineInTest()<CR>
+map <leader>t :!fab test_path:%<cr>
 
-function! RunCurrentTest()
-  let in_test_file = match(expand("%"), '\(.feature\|_spec.rb\|_test.rb\)$') != -1
-  if in_test_file
-    call SetTestFile()
-    if match(expand('%'), '\.feature$') != -1
-      call SetTestRunner("!cucumber")
-      exec g:bjo_test_runner g:bjo_test_file
-    elseif match(expand('%'), '_spec\.rb$') != -1
-      call SetTestRunner("!rspec")
-      exec g:bjo_test_runner g:bjo_test_file
-    else
-      "call SetTestRunner("!ruby -Itest")
-      call SetTestRunner("!zeus test")
-      exec g:bjo_test_runner g:bjo_test_file
-    endif
-  else
-    exec g:bjo_test_runner g:bjo_test_file
-  endif
-endfunction
-
-function! SetTestRunner(runner)
-  let g:bjo_test_runner=a:runner
-endfunction
-
-function! RunCurrentLineInTest()
-  let in_test_file = match(expand("%"), '\(.feature\|_spec.rb\|_test.rb\)$') != -1
-  if in_test_file
-    call SetTestFileWithLine()
-  end
-  exec "!rspec" g:bjo_test_file . ":" . g:bjo_test_file_line
-endfunction
-
-function! SetTestFile()
-  let g:bjo_test_file=@%
-endfunction
-
-function! SetTestFileWithLine()
-  let g:bjo_test_file=@%
-  let g:bjo_test_file_line=line(".")
-endfunction
-
-" --- End test runnner ---
-
-" ----------------------------------------
-" --- Inline variable - Gary Bernhardt ---
-" ----------------------------------------
-
-function! InlineVariable()
-    " Copy the variable under the cursor into the 'a' register
-    :let l:tmp_a = @a
-    :normal "ayiw
-    " Delete variable and equals sign
-    :normal 2daW
-    " Delete the expression into the 'b' register
-    :let l:tmp_b = @b
-    :normal "bd$
-    " Delete the remnants of the line
-    :normal dd
-    " Go to the end of the previous line so we can start our search for the
-    " usage of the variable to replace. Doing '0' instead of 'k$' doesn't
-    " work; I'm not sure why.
-    normal k$
-    " Find the next occurence of the variable
-    exec '/\<' . @a . '\>'
-    " Replace that occurence with the text we yanked
-    exec ':.s/\<' . @a . '\>/' . @b
-    :let @a = l:tmp_a
-    :let @b = l:tmp_b
-endfunction
-nnoremap <leader>ri :call InlineVariable()<cr>
+" Map a key to run the tests in the current file - :Test <c-r>%
+:command! -nargs=1 Test :map ,t :w\|!py.test --ds=zenlike.settings.test --tb=short -q -s <args><cr>
