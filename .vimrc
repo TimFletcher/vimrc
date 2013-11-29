@@ -1,5 +1,4 @@
-set nocompatible               " be iMproved
-filetype off                   " required!
+set nocompatible               " be iMproved filetype off                   " required!
 
 set rtp+=~/.vim/bundle/vundle/
 call vundle#rc()
@@ -7,13 +6,11 @@ call vundle#rc()
 " let Vundle manage Vundle
 Bundle 'gmarik/vundle'
 
-"Bundle 'SirVer/ultisnips.git'
+Bundle 'SirVer/ultisnips.git'
 Bundle 'altercation/vim-colors-solarized.git'
-Bundle 'jmcantrell/vim-virtualenv.git'
 Bundle 'kchmck/vim-coffee-script.git'
 Bundle 'kien/ctrlp.vim.git'
 Bundle 'nvie/vim-flake8.git'
-"Bundle 'tpope/vim-surround.git'
 
 " ---------------------
 " --- Basic Options ---
@@ -107,12 +104,6 @@ augroup vimrcEx
   autocmd FileType ruby,haml,eruby,yaml,html,javascript,sass,cucumber set ai sw=2 sts=2 et
   autocmd FileType python set sw=4 sts=4 et
 
-
-  " for pylint
-  "autocmd FileType python compiler pylint
-
-
-
   "autocmd! BufRead,BufNewFile *.sass setfiletype sass 
 
   "autocmd BufRead *.mkd  set ai formatoptions=tcroqn2 comments=n:&gt;
@@ -164,22 +155,6 @@ imap <leader>c </<C-X><C-O><esc>F<i
 " Quick save
 nmap <leader>w :w<cr>
 
-" ----------------------------
-" --- Multipurpose tab key ---
-" --- Indent if we're at the beginning of a line. Else, do completion.
-" ----------------------------
-
-function! InsertTabWrapper()
-    let col = col('.') - 1
-    if !col || getline('.')[col - 1] !~ '\k'
-        return "\<tab>"
-    else
-        return "\<c-p>"
-    endif
-endfunction
-inoremap <tab> <c-r>=InsertTabWrapper()<cr>
-inoremap <s-tab> <c-n>
-
 " Remove trailing whitespace on save for ruby files.
 au BufWritePre *.rb :%s/\s\+$//e
 
@@ -198,24 +173,9 @@ highlight PmenuSel ctermfg=black
 " ------------------------------
 
 let g:ctrlp_working_path_mode = 0
-let g:ctrlp_custom_ignore = '\.bin$\|bin$\|\.sass-cache$\|\.css$\|htmlcov$\|vendor\/bundle$\|vendor\/gems$\|node_modules$'
+let g:ctrlp_custom_ignore = '\.bin$\|bin$\|\.sass-cache$\|\.css$\|htmlcov$\|vendor\/bundle$\|vendor\/gems$\|node_modules|\.staticfiles|\.staticgen$'
 let g:ctrlp_match_window = 'bottom,order:btt,min:1,max:25,results:25'
-
-
 nnoremap <c-b> :CtrlPBuffer<CR>
-
-" --------------------
-" --- Omnicomplete ---
-" --------------------
-
-"inoremap <C-space> <C-x><C-o>
-"autocmd FileType ruby set omnifunc=rubycomplete#Complete
-"autocmd FileType ruby let g:rubycomplete_buffer_loading=1
-"autocmd FileType ruby let g:rubycomplete_classes_in_global=1
-autocmd FileType python set omnifunc=pythoncomplete#Complete
-"autocmd FileType javascript set omnifunc=javascriptcomplete#CompleteJS
-"autocmd FileType html set omnifunc=htmlcomplete#CompleteTags
-"autocmd FileType css set omnifunc=csscomplete#CompleteCSS
 
 " ---------------------------
 " --- Custom indentations ---
@@ -225,7 +185,6 @@ autocmd BufRead,BufNewFile *.js,*.js.coffee,*.coffee,*.js.erb,*.html,*.rb,*.css,
 autocmd Filetype javascript setlocal ts=2 sw=2 sts=0 expandtab
 autocmd Filetype html setlocal ts=2 sw=2 expandtab
 autocmd Filetype ruby setlocal ts=2 sw=2 expandtab
-"set filetype=html.javascript
 
 " ------------------------
 " --- Custom FileTypes ---
@@ -240,9 +199,8 @@ autocmd BufRead,BufNewFile {Capfile,Gemfile,Rakefile,Thorfile,config.ru,.caprc,.
 " Search for tag file
 set tags=tags;/
 
-" Ctags should include the virtualenv
-map <F1> :!ctags -R -f ./tags $VIRTUAL_ENV/lib/python2.7/site-packages<CR>
-map <F2> :!ctags -R -f ./tags --exclude=node_modules<CR>
+" Ctags should include the virtualenv's site-packages and src directories
+map <F1> :!ctags -R -f ./tags --exclude=node_modules . $VIRTUAL_ENV/lib/python2.7/site-packages $VIRTUAL_ENV/src<CR>
 
 " Show window to choose when there are multiple matches for a tag - http://stackoverflow.com/a/3614824/453405
 nnoremap <C-]> :execute 'tj' expand('<cword>')<CR>zv "
@@ -256,60 +214,32 @@ if has("gui_running")
   set guioptions-=T
 endif
 
-" --------------------------------------------------------------
-" --- Use Ack for multi-file search. Simplified from ack.vim ---
-" --------------------------------------------------------------
+" ---------------------------------------------------------
+" --- Use ag (The Silver Searcher) for multi-file search
+" ---------------------------------------------------------
 
-let g:ackprg="ack -H --nocolor --nogroup --column"
-let g:ackhighlight=1
-let g:ackformat="%f:%l:%c:%m"
-function! s:Ack(cmd, args, ...)
-  redraw
-  echo "Searching ..."
+" The Silver Searcher
+if executable('ag')
+  " Use ag over grep
+  set grepprg=ag\ --nogroup\ --nocolor
 
-  " If no pattern is provided, search for the word under the cursor
-  if empty(a:args)
-    let l:grepargs = expand("<cword>")
-  else
-    let l:grepargs = a:args . join(a:000, ' ')
-  end
+  " Use ag in CtrlP for listing files. Lightning fast and respects .gitignore
+  let g:ctrlp_user_command = 'ag %s -l --nocolor -g ""'
 
-  " Execute search
-  let &grepprg=g:ackprg
-  let &grepformat=g:ackformat
-  silent execute a:cmd . " " . escape(l:grepargs, '|')
-  botright copen
+  " ag is fast enough that CtrlP doesn't need to cache
+  let g:ctrlp_use_caching = 0
+endif
 
-  " Highlight the search keyword.
-  let @/=a:args
-  set hlsearch
-
-  redraw!
-endfunction
-command! -bang -nargs=* -complete=file Ack call s:Ack('grep<bang>',<q-args>)
-
-:map <leader>f :Ack 
-
-" --------------------------------------------
-" --- Rename current file - Gary Berhnardt ---
-" --------------------------------------------
-
-function! RenameFile()
-  let old_name = expand('%')
-  let new_name = input('New file name: ', expand('%'), 'file')
-  if new_name != '' && new_name != old_name
-    exec ':saveas ' . new_name
-    exec ':silent !rm ' . old_name
-    redraw!
-  endif
-endfunction
-map <leader>r :call RenameFile()<cr>
+" bind \ (backward slash) to grep shortcut
+command -nargs=+ -complete=file -bar Ag silent! grep! <args>|cwindow|redraw!
+nnoremap \ :Ag<SPACE>
 
 " -------------------------
 " --- Run python tests ---
 " ------------------------
 
-map <leader>t :!fab test_path:%<cr>
+"map <leader>t :!fab test_path:%<cr>
 
 " Map a key to run the tests in the current file - :Test <c-r>%
-:command! -nargs=1 Test :map ,t :w\|!py.test --ds=zenlike.settings.test --tb=short -q -s <args><cr>
+":command! -nargs=1 Test :map ,t :w\|!py.test --ds=zenlike.settings.test --tb=short -q -s <args><cr>
+:command! -nargs=1 Test :map ,t :w\|!django-admin.py test --settings=`echo $DJANGO_TEST_SETTINGS_MODULE` <args><cr>
