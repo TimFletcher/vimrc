@@ -25,6 +25,7 @@ set directory=/tmp/               " Set temporary directory (don't litter local 
 set encoding=utf-8                " Use UTF-8 everywhere
 set nojoinspaces                  " Remove double spaces when joining lines
 set number                        " Show line numbers
+"set relativenumber                " Show relative line numbers
 set ruler                         " Show cursor position
 set scrolloff=5                   " Show 5 lines of context around the cursor
 set showmode                      " Display the mode you're in
@@ -74,7 +75,7 @@ set nolist
 set wrapmargin=0
 set textwidth=0                   " Maximum width of text
 if exists("&colorcolumn")
-  set colorcolumn=80              " Set coloured column at 80 characters
+  set colorcolumn=79              " Set coloured column at 100 characters
 endif
 
 " Tabstops and EOLs
@@ -90,6 +91,9 @@ let mapleader = ","
 
 " Python syntax check on save
 "autocmd BufWritePost *.py call Flake8()
+
+" Ignore line length PEP* errors
+let g:flake8_ignore="E501" 
 
 " ---------------------------
 " --- Custom autocommands ---
@@ -155,11 +159,14 @@ imap <leader>c </<C-X><C-O><esc>F<i
 " Quick save
 nmap <leader>w :w<cr>
 
-" Remove trailing whitespace on save for ruby files.
-au BufWritePre *.rb :%s/\s\+$//e
-
 " Make the omnicomplete text readable
 highlight PmenuSel ctermfg=black
+
+" Remove all trailing whitespace
+function! TrimWhiteSpace()
+    %s/\s\+$//e
+endfunction
+:map ,s :call TrimWhiteSpace()<cr>
 
 " --------------------------
 " --- Rails Key Mappings ---
@@ -176,6 +183,20 @@ let g:ctrlp_working_path_mode = 0
 let g:ctrlp_custom_ignore = '\.bin$\|bin$\|\.sass-cache$\|\.css$\|htmlcov$\|vendor\/bundle$\|vendor\/gems$\|node_modules|\.staticfiles|\.staticgen$'
 let g:ctrlp_match_window = 'bottom,order:btt,min:1,max:25,results:25'
 nnoremap <c-b> :CtrlPBuffer<CR>
+
+" ------------------------------------------------------------------------
+" --- Key command to toggle between absolute and relative line numbers ---
+" ------------------------------------------------------------------------
+
+"function! NumberToggle()
+"  if(&relativenumber == 1)
+"    set number
+"  else
+"    set relativenumber
+"  endif
+"endfunc
+"
+"nnoremap <C-n> :call NumberToggle()<cr>
 
 " ---------------------------
 " --- Custom indentations ---
