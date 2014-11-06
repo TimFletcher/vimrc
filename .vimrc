@@ -1,4 +1,5 @@
 set nocompatible               " be iMproved filetype off                   " required!
+filetype off                   " Added 30th Oct 2014
 
 set rtp+=~/.vim/bundle/vundle/
 call vundle#rc()
@@ -6,18 +7,24 @@ call vundle#rc()
 " let Vundle manage Vundle
 Bundle 'gmarik/vundle'
 
-Bundle 'SirVer/ultisnips.git'
-Bundle 'altercation/vim-colors-solarized.git'
-Bundle 'kchmck/vim-coffee-script.git'
-Bundle 'kien/ctrlp.vim.git'
-Bundle 'nvie/vim-flake8.git'
+Plugin 'pangloss/vim-javascript'
+Plugin 'altercation/vim-colors-solarized.git'
+Plugin 'cakebaker/scss-syntax.vim'
+Plugin 'kien/ctrlp.vim.git'
+Plugin 'nvie/vim-flake8.git'
+Plugin 'tpope/vim-surround.git'
+Plugin 'kchmck/vim-coffee-script'
+Plugin 'Shutnik/jshint2.vim'
+Plugin 'SirVer/ultisnips'
+Plugin 'honza/vim-snippets'
+Plugin 'Slava/vim-spacebars'
 
 " ---------------------
 " --- Basic Options ---
 " ---------------------
 
-filetype plugin indent on         " required
 syntax enable                     " Turn on syntax highlighting.
+filetype plugin indent on         " required
 set autoindent                    " Next line has same indentation as previous line
 set backspace=indent,eol,start    " Intuitive backspacing.
 set clipboard=unnamed             " Allow yank etc to work with the OS X clipboard
@@ -39,9 +46,15 @@ set wildignore+=.git,.gitkeep                                " Version control
 set wildignore+=tags,*.log,tmp                               " Misc
 set wildmenu                      " Enhanced command line completion
 set wildmode=list:longest         " Complete files like a shell
+set exrc                          " enable per-directory .vimrc files
+set secure                        " disable unsafe commands in local .vimrc files
+
+" Don't write backups as this sends multiple save events which can cause issues when compiling sass on save
+" http://stackoverflow.com/questions/10300835/too-many-inotify-events-while-editing-in-vim#comment13284176_10300881
+set nowritebackup
 
 " hide files in netrw
-let g:netrw_list_hide= '.*\.pyc$,.DS_Store,^tags,\.sass-cache,htmlcov'
+let g:netrw_list_hide= '.*\.pyc$,.DS_Store,^tags$,\.sass-cache,htmlcov'
 
 set shell=bash\ -l                " Source ~/.profile for :sh
 set noesckeys                     " Get rid of the delay when hitting esc!
@@ -89,11 +102,28 @@ set statusline=\ %f%m%r%h\ %w\ Line:\ %l/%L:%c " Customise the status line
 " Leader Key
 let mapleader = ","
 
-" Python syntax check on save
-"autocmd BufWritePost *.py call Flake8()
+" ---------------------------
+" --------- Plugins ---------
+" ---------------------------
 
-" Ignore line length PEP* errors
-let g:flake8_ignore="E501" 
+" Ultisnips
+let g:UltiSnipsExpandTrigger="<tab>"
+let g:UltiSnipsJumpForwardTrigger="<c-b>"
+let g:UltiSnipsJumpBackwardTrigger="<c-z>"
+
+" CtrlP.vim
+let g:ctrlp_working_path_mode = 0
+let g:ctrlp_custom_ignore = '\.bin$\|bin$\|\.sass-cache$\|\.css$\|htmlcov$\|vendor\/bundle$\|vendor\/gems$\|node_modules|\.staticfiles|\.staticgen$'
+let g:ctrlp_match_window = 'bottom,order:btt,min:1,max:25,results:25'
+nnoremap <c-b> :CtrlPBuffer<CR>
+
+" Flake8
+let g:flake8_ignore="E501"                 " Ignore line length PEP* errors
+
+" JSHint
+nnoremap <silent><F7> :JSHint<CR>
+inoremap <silent><F7> <C-O>:JSHint<CR>
+vnoremap <silent><F7> :JSHint<CR>
 
 " ---------------------------
 " --- Custom autocommands ---
@@ -122,9 +152,6 @@ augroup END
 " --------------------
 " --- Key Mappings ---
 " --------------------
-
-" Leave insert mode
-"imap jk <esc>
 
 " Disable ctrl + c
 imap <c-c> <Nop>
@@ -166,7 +193,7 @@ highlight PmenuSel ctermfg=black
 function! TrimWhiteSpace()
     %s/\s\+$//e
 endfunction
-:map ,s :call TrimWhiteSpace()<cr>
+:map ,tw :call TrimWhiteSpace()<cr>
 
 " --------------------------
 " --- Rails Key Mappings ---
@@ -174,15 +201,6 @@ endfunction
 
 " Annotate models
 :map <leader>a :!.bin/annotate<cr>
-
-" ------------------------------
-" --- ctrlp.vim configuration --
-" ------------------------------
-
-let g:ctrlp_working_path_mode = 0
-let g:ctrlp_custom_ignore = '\.bin$\|bin$\|\.sass-cache$\|\.css$\|htmlcov$\|vendor\/bundle$\|vendor\/gems$\|node_modules|\.staticfiles|\.staticgen$'
-let g:ctrlp_match_window = 'bottom,order:btt,min:1,max:25,results:25'
-nnoremap <c-b> :CtrlPBuffer<CR>
 
 " ------------------------------------------------------------------------
 " --- Key command to toggle between absolute and relative line numbers ---
@@ -211,7 +229,9 @@ autocmd Filetype ruby setlocal ts=2 sw=2 expandtab
 " --- Custom FileTypes ---
 " ------------------------
 
-autocmd BufRead,BufNewFile {Capfile,Gemfile,Rakefile,Thorfile,config.ru,.caprc,.irbrc,irb_tempfile*} set ft=ruby
+autocmd BufRead,BufNewFile {Capfile,Gemfile,Rakefile,Thorfile,config.ru,.caprc,.irbrc,irb_tempfile*} set filetype=ruby
+autocmd BufRead,BufNewFile *.html set filetype=html.htmldjango
+autocmd BufRead,BufNewFile *.scss set filetype=scss.css
 
 " -------------------------
 " --- Ctags and Taglist ---
@@ -221,7 +241,7 @@ autocmd BufRead,BufNewFile {Capfile,Gemfile,Rakefile,Thorfile,config.ru,.caprc,.
 set tags=tags;/
 
 " Ctags should include the virtualenv's site-packages and src directories
-map <F1> :!ctags -R -f ./tags --exclude=node_modules . $VIRTUAL_ENV/lib/python2.7/site-packages $VIRTUAL_ENV/src<CR>
+map <F1> :!ctags -R -f ./tags --exclude=node_modules . $VIRTUAL_ENV/lib/python3.4/site-packages $VIRTUAL_ENV/lib/python2.7/site-packages $VIRTUAL_ENV/src vendor/bundle/gems<CR>
 
 " Show window to choose when there are multiple matches for a tag - http://stackoverflow.com/a/3614824/453405
 nnoremap <C-]> :execute 'tj' expand('<cword>')<CR>zv "
@@ -234,6 +254,18 @@ if has("gui_running")
   set guioptions-=m
   set guioptions-=T
 endif
+
+" -----------------
+" --- rspec.vim ---
+" -----------------
+
+"let g:rspec_command = "!bundle exec rspec {spec} --format documentation"
+
+" RSpec.vim mappings
+"map <Leader>t :call RunCurrentSpecFile()<CR>
+"map <Leader>s :call RunNearestSpec()<CR>
+"map <Leader>l :call RunLastSpec()<CR>
+"map <Leader>a :call RunAllSpecs()<CR>
 
 " ---------------------------------------------------------
 " --- Use ag (The Silver Searcher) for multi-file search
@@ -252,15 +284,28 @@ if executable('ag')
 endif
 
 " bind \ (backward slash) to grep shortcut
-command -nargs=+ -complete=file -bar Ag silent! grep! <args>|cwindow|redraw!
-nnoremap \ :Ag<SPACE>
+command -nargs=+ -complete=file -bar Ack silent! grep! <args>|cwindow|redraw!
+nnoremap \ :Ack<SPACE>
 
-" -------------------------
-" --- Run python tests ---
+" ------------------------
+" --- Run Django tests ---
 " ------------------------
 
-"map <leader>t :!fab test_path:%<cr>
+function! GetModule()
+  let l:module = substitute(expand("%"), "/", ".", "g")
+  let l:module = substitute(l:module, ".py", "", "")
+  return l:module
+endfunction
 
-" Map a key to run the tests in the current file - :Test <c-r>%
-":command! -nargs=1 Test :map ,t :w\|!py.test --ds=zenlike.settings.test --tb=short -q -s <args><cr>
-:command! -nargs=1 Test :map ,t :w\|!django-admin.py test --settings=`echo $DJANGO_TEST_SETTINGS_MODULE` <args><cr>
+function! MapDjangoTest()
+  let l:module = GetModule()
+  let l:command = "!django-admin.py test --settings=`echo $DJANGO_TEST_SETTINGS_MODULE` {module}"
+  let g:test_command = substitute(l:command, "{module}", l:module, "g")
+endfunction
+
+function! RunDjangoTest()
+  execute g:test_command
+endfunction
+
+map <Leader>m :call MapDjangoTest()<CR>
+map <Leader>t :call RunDjangoTest()<CR>
